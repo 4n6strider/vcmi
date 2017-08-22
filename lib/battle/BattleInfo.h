@@ -21,7 +21,7 @@ class CStackBasicDescriptor;
 struct DLL_LINKAGE BattleInfo : public CBonusSystemNode, public CBattleInfoCallback
 {
 	std::array<SideInBattle, 2> sides; //sides[0] - attacker, sides[1] - defender
-	si32 round, activeStack, selectedStack;
+	si32 round, activeStack;
 	const CGTownInstance * town; //used during town siege, nullptr if this is not a siege (note that fortless town IS also a siege)
 	int3 tile; //for background and bonuses
 	std::vector<CStack*> stacks;
@@ -39,7 +39,6 @@ struct DLL_LINKAGE BattleInfo : public CBonusSystemNode, public CBattleInfoCallb
 		h & sides;
 		h & round;
 		h & activeStack;
-		h & selectedStack;
 		h & town;
 		h & tile;
 		h & stacks;
