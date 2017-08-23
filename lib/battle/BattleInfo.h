@@ -18,8 +18,9 @@ class CStack;
 class CStackInstance;
 class CStackBasicDescriptor;
 
-struct DLL_LINKAGE BattleInfo : public CBonusSystemNode, public CBattleInfoCallback
+class DLL_LINKAGE BattleInfo : public CBonusSystemNode, public CBattleInfoCallback
 {
+public:
 	std::array<SideInBattle, 2> sides; //sides[0] - attacker, sides[1] - defender
 	si32 round, activeStack;
 	const CGTownInstance * town; //used during town siege, nullptr if this is not a siege (note that fortless town IS also a siege)

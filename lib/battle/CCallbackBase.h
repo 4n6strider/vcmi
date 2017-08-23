@@ -12,7 +12,7 @@
 
 #define RETURN_IF_NOT_BATTLE(X) if(!duringBattle()) {logGlobal->error("%s called when no battle!", __FUNCTION__); return X; }
 
-struct BattleInfo;
+class BattleInfo;
 
 class CBattleInfoEssentials;
 

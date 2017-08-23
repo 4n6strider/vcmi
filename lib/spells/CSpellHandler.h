@@ -30,7 +30,7 @@ class CLegacyConfigParser;
 class CGHeroInstance;
 class CStack;
 class CBattleInfoCallback;
-struct BattleInfo;
+class BattleInfo;
 struct CPackForClient;
 struct BattleSpellCast;
 class CGameInfoCallback;

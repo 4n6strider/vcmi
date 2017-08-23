@@ -1306,7 +1306,7 @@ struct MapObjectSelectDialog : public Query
 	}
 };
 
-struct BattleInfo;
+class BattleInfo;
 struct BattleStart : public CPackForClient
 {
 	BattleStart()

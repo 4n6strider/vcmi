@@ -20,6 +20,7 @@ class CArmedInstance;
 class CArtifactSet;
 class CBonusSystemNode;
 struct ArtSlotInfo;
+class BattleInfo;
 
 #include "ConstTransitivePtr.h"
 #include "GameConstants.h"

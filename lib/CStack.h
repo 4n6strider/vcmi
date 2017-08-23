@@ -16,7 +16,7 @@
 #include "mapObjects/CGHeroInstance.h" // for commander serialization
 
 struct BattleStackAttacked;
-struct BattleInfo;
+class BattleInfo;
 class CStack;
 class CHealthInfo;
 class JsonSerializeFormat;
