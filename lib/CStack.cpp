@@ -357,7 +357,8 @@ CStackState::CStackState(const IUnitInfo * Owner)
 	casts(Owner),
 	counterAttacks(Owner),
 	health(Owner),
-	shots(Owner)
+	shots(Owner),
+	cloneID(-1)
 {
 
 }
@@ -378,7 +379,8 @@ CStackState::CStackState(const CStackState & other)
 	casts(other.casts),
 	counterAttacks(other.counterAttacks),
 	health(other.health),
-	shots(other.shots)
+	shots(other.shots),
+	cloneID(other.cloneID)
 {
 
 }
@@ -401,6 +403,7 @@ CStackState & CStackState::operator=(const CStackState & other)
 	counterAttacks = other.counterAttacks;
 	health = other.health;
 	shots = other.shots;
+	cloneID = other.cloneID;
 	return *this;
 }
 
@@ -481,6 +484,8 @@ void CStackState::serializeJson(JsonSerializeFormat & handler)
 	handler.serializeStruct("counterAttacks", counterAttacks);
 	handler.serializeStruct("health", health);
 	handler.serializeStruct("shots", shots);
+
+	handler.serializeInt("cloneID", cloneID);
 }
 
 void CStackState::localInit()
@@ -507,6 +512,8 @@ void CStackState::reset()
 	counterAttacks.reset();
 	health.reset();
 	shots.reset();
+
+	cloneID = -1;
 }
 
 void CStackState::swap(CStackState & other)
@@ -528,6 +535,8 @@ void CStackState::swap(CStackState & other)
 	std::swap(counterAttacks, other.counterAttacks);
 	std::swap(health, other.health);
 	std::swap(shots, other.shots);
+
+	std::swap(cloneID, other.cloneID);
 }
 
 void CStackState::toInfo(CStackStateInfo & info)
@@ -591,7 +600,6 @@ CStack::CStack(const CStackInstance * Base, PlayerColor O, int I, ui8 Side, Slot
 	slot(S),
 	side(Side),
 	stackState(this),
-	cloneID(-1),
 	position()
 {
 	stackState.health.init(); //???
@@ -609,7 +617,6 @@ CStack::CStack()
 	slot = SlotID(255);
 	side = 1;
 	position = BattleHex();
-	cloneID = -1;
 }
 
 CStack::CStack(const CStackBasicDescriptor * stack, PlayerColor O, int I, ui8 Side, SlotID S)
@@ -622,7 +629,6 @@ CStack::CStack(const CStackBasicDescriptor * stack, PlayerColor O, int I, ui8 Si
 	slot(S),
 	side(Side),
 	stackState(this),
-	cloneID(-1),
 	position()
 {
 	stackState.health.init(); //???
@@ -636,7 +642,6 @@ const CCreature * CStack::getCreature() const
 void CStack::localInit(BattleInfo * battleInfo)
 {
 	battle = battleInfo;
-	cloneID = -1;
 	assert(type);
 
 	exportBonuses();

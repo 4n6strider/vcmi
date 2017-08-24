@@ -1394,14 +1394,14 @@ DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
 
 	if(killed() || willRebirth())
 	{
-		if(at->cloneID >= 0)
+		if(at->stackState.cloneID >= 0)
 		{
 			//remove clone as well
-			CStack * clone = gs->curB->getStack(at->cloneID);
+			CStack * clone = gs->curB->getStack(at->stackState.cloneID);
 			if(clone)
 				clone->makeGhost();
 
-			at->cloneID = -1;
+			at->stackState.cloneID = -1;
 		}
 	}
 	//life drain handling
@@ -1428,8 +1428,8 @@ DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
 	{
 		for(CStack * s : gs->curB->stacks)
 		{
-			if(s->cloneID == at->ID)
-				s->cloneID = -1;
+			if(s->stackState.cloneID == at->ID)
+				s->stackState.cloneID = -1;
 		}
 	}
 }
@@ -1727,17 +1727,17 @@ DLL_LINKAGE void BattleStacksRemoved::applyGs(CGameState *gs)
 
 				//stack may be removed instantly (not being killed first)
 				//handle clone remove also here
-				if(toRemove->cloneID >= 0)
+				if(toRemove->stackState.cloneID >= 0)
 				{
-					stackIDs.insert(toRemove->cloneID);
-					toRemove->cloneID = -1;
+					stackIDs.insert(toRemove->stackState.cloneID);
+					toRemove->stackState.cloneID = -1;
 				}
 
 				//cleanup remaining clone links if any
 				for(CStack * s : gs->curB->stacks)
 				{
-					if(s->cloneID == toRemove->ID)
-						s->cloneID = -1;
+					if(s->stackState.cloneID == toRemove->ID)
+						s->stackState.cloneID = -1;
 				}
 
 				break;
@@ -1802,7 +1802,7 @@ DLL_LINKAGE void BattleSetStackProperty::applyGs(CGameState * gs)
 		}
 		case HAS_CLONE:
 		{
-			stack->cloneID = val;
+			stack->stackState.cloneID = val;
 			break;
 		}
 	}

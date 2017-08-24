@@ -106,7 +106,7 @@ bool Clone::isValidTarget(const Mechanics * m, const CStack * s) const
 	if(s->isClone())
 		return false;
 	//can`t clone if old clone still alive
-	if(s->cloneID != -1)
+	if(s->stackState.cloneID != -1)
 		return false;
 
 	return StackEffect::isValidTarget(m, s);

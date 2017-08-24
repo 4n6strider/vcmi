@@ -178,6 +178,9 @@ public:
 	CHealth health;
 	CShots shots;
 
+	///id of alive clone of this stack clone if any
+	si32 cloneID;
+
 	explicit CStackState(const IUnitInfo * Owner);
 	CStackState(const CStackState & other);
 	CStackState(CStackState && other) = delete;
@@ -230,9 +233,6 @@ public:
 	CStackState stackState;
 
 	BattleHex position; //position on battlefield; -2 - keep, -3 - lower tower, -4 - upper tower
-
-	///id of alive clone of this stack clone if any
-	si32 cloneID;
 
 	CStack(const CStackInstance * base, PlayerColor O, int I, ui8 Side, SlotID S);
 	CStack(const CStackBasicDescriptor * stack, PlayerColor O, int I, ui8 Side, SlotID S = SlotID(255));
