@@ -27,7 +27,6 @@ StackWithBonuses::StackWithBonuses(const CStack * Stack)
 	state(this)
 {
 	state = stack->stackState;
-	position = stack->position;
 }
 
 const TBonusListPtr StackWithBonuses::getAllBonuses(const CSelector & selector, const CSelector & limit,

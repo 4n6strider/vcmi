@@ -21,9 +21,9 @@ static void retreiveTurretDamageRange(const CGTownInstance * town, const CStack 
 {
 	assert(turret->getCreature()->idNumber == CreatureID::ARROW_TOWERS);
 	assert(town);
-	assert(turret->position >= -4 && turret->position <= -2);
+	assert(turret->initialPosition >= -4 && turret->initialPosition <= -2);
 
-	float multiplier = (turret->position == -2) ? 1 : 0.5;
+	float multiplier = (turret->initialPosition == -2) ? 1 : 0.5;
 
 	int baseMin = 6;
 	int baseMax = 10;
@@ -139,7 +139,7 @@ ESpellCastProblem::ESpellCastProblem CBattleInfoCallback::battleCanCastSpell(con
 
 si8 CBattleInfoCallback::battleHasWallPenalty(const CStack * stack, BattleHex destHex) const
 {
-	return battleHasWallPenalty(stack, stack->position, destHex);
+	return battleHasWallPenalty(stack, stack->getPosition(), destHex);
 }
 
 si8 CBattleInfoCallback::battleHasWallPenalty(const IBonusBearer * bonusBearer, BattleHex shooterPosition, BattleHex destHex) const
@@ -177,7 +177,7 @@ si8 CBattleInfoCallback::battleCanTeleportTo(const CStack * stack, BattleHex des
 	//check for wall
 	//advanced teleport can pass wall of fort|citadel, expert - of castle
 	if ((siegeLevel > CGTownInstance::NONE && telportLevel < 2) || (siegeLevel >= CGTownInstance::CASTLE && telportLevel < 3))
-		return sameSideOfWall(stack->position, destHex);
+		return sameSideOfWall(stack->stackState.position, destHex);
 
 	return true;
 }
@@ -451,7 +451,7 @@ std::vector<BattleHex> CBattleInfoCallback::battleGetAvailableHexes(const CStack
 	std::vector<BattleHex> ret;
 
 	RETURN_IF_NOT_BATTLE(ret);
-	if(!stack->position.isValid()) //turrets
+	if(!stack->initialPosition.isValid()) //turrets
 		return ret;
 
 	auto reachability = getReachability(stack);
@@ -504,7 +504,7 @@ std::vector<BattleHex> CBattleInfoCallback::battleGetAvailableHexes(const CStack
 
 			std::vector<BattleHex> occupied = otherSt->getHexes();
 
-			if(battleCanShoot(stack, otherSt->position))
+			if(battleCanShoot(stack, otherSt->stackState.position))
 			{
 				attackable->insert(attackable->end(), occupied.begin(), occupied.end());
 				continue;
@@ -754,8 +754,8 @@ TDmgRange CBattleInfoCallback::calculateDmgRange(const BattleAttackInfo & info) 
 	};
 
 	//wall / distance penalty + advanced air shield
-	const bool distPenalty = !info.attackerBonuses->hasBonusOfType(Bonus::NO_DISTANCE_PENALTY) && battleHasDistancePenalty(info.attackerBonuses, info.attackerPosition, info.defenderPosition);
-	const bool obstaclePenalty = battleHasWallPenalty(info.attackerBonuses, info.attackerPosition, info.defenderPosition);
+	const bool distPenalty = !info.attackerBonuses->hasBonusOfType(Bonus::NO_DISTANCE_PENALTY) && battleHasDistancePenalty(info.attackerBonuses, info.attackerState.getPosition(), info.defenderState.getPosition());
+	const bool obstaclePenalty = battleHasWallPenalty(info.attackerBonuses, info.attackerState.getPosition(), info.defenderState.getPosition());
 
 	if(info.shooting)
 	{
@@ -813,7 +813,7 @@ TDmgRange CBattleInfoCallback::calculateDmgRange(const BattleAttackInfo & info) 
 TDmgRange CBattleInfoCallback::battleEstimateDamage(CRandomGenerator & rand, const CStack * attacker, const CStack * defender, TDmgRange * retaliationDmg) const
 {
 	RETURN_IF_NOT_BATTLE(std::make_pair(0, 0));
-	const bool shooting = battleCanShoot(attacker, defender->position);
+	const bool shooting = battleCanShoot(attacker, defender->getPosition());
 	const BattleAttackInfo bai(attacker, defender, attacker, defender, shooting);
 	return battleEstimateDamage(rand, bai, retaliationDmg);
 }
@@ -875,10 +875,10 @@ std::vector<std::shared_ptr<const CObstacleInstance>> CBattleInfoCallback::getAl
 	RETURN_IF_NOT_BATTLE(affectedObstacles);
 	if(stack->alive())
 	{
-		affectedObstacles = battleGetAllObstaclesOnPos(stack->position, false);
+		affectedObstacles = battleGetAllObstaclesOnPos(stack->getPosition(), false);
 		if(stack->doubleWide())
 		{
-			BattleHex otherHex = stack->occupiedHex(stack->position);
+			BattleHex otherHex = stack->occupiedHex(stack->getPosition());
 			if(otherHex.isValid())
 				for(auto & i : battleGetAllObstaclesOnPos(otherHex, false))
 					affectedObstacles.push_back(i);
@@ -1156,7 +1156,7 @@ bool CBattleInfoCallback::isInTacticRange(BattleHex dest) const
 
 ReachabilityInfo CBattleInfoCallback::getReachability(const CStack * stack) const
 {
-	ReachabilityInfo::Parameters params(stack, stack->position);
+	ReachabilityInfo::Parameters params(stack, stack->getPosition());
 
 	if(!battleDoWeKnowAbout(stack->side))
 	{
@@ -1203,7 +1203,7 @@ AttackableTiles CBattleInfoCallback::getPotentiallyAttackableHexes (const CStack
 	RETURN_IF_NOT_BATTLE(at);
 
 	const int WN = GameConstants::BFIELD_WIDTH;
-	BattleHex hex = (attackerPos != BattleHex::INVALID) ? attackerPos.hex : attacker->position.hex; //real or hypothetical (cursor) position
+	BattleHex hex = (attackerPos != BattleHex::INVALID) ? attackerPos : attacker->getPosition(); //real or hypothetical (cursor) position
 
 	//FIXME: dragons or cerbers can rotate before attack, making their base hex different (#1124)
 	bool reverse = isToReverse (hex, destinationTile, isAttacker, attacker->doubleWide(), isAttacker);
@@ -1361,7 +1361,7 @@ ReachabilityInfo::TDistances CBattleInfoCallback::battleGetDistances(const IUnit
 
 si8 CBattleInfoCallback::battleHasDistancePenalty(const CStack * stack, BattleHex destHex) const
 {
-	return battleHasDistancePenalty(stack, stack->position, destHex);
+	return battleHasDistancePenalty(stack, stack->getPosition(), destHex);
 }
 
 si8 CBattleInfoCallback::battleHasDistancePenalty(const IBonusBearer *bonusBearer, BattleHex shooterPosition, BattleHex destHex) const

@@ -30,7 +30,7 @@ BattleAction BattleAction::makeHeal(const CStack * healer, const CStack * healed
 	ba.side = healer->side;
 	ba.actionType = STACK_HEAL;
 	ba.stackNumber = healer->ID;
-	ba.destinationTile = healed->position;
+	ba.destinationTile = healed->getPosition();
 	return ba;
 }
 
@@ -51,7 +51,7 @@ BattleAction BattleAction::makeMeleeAttack(const CStack * stack, const CStack * 
 	ba.actionType = WALK_AND_ATTACK;
 	ba.stackNumber = stack->ID;
 	ba.destinationTile = attackFrom;
-	ba.additionalInfo = attacked->position;
+	ba.additionalInfo = attacked->getPosition();
 	return ba;
 
 }
@@ -70,7 +70,7 @@ BattleAction BattleAction::makeShotAttack(const CStack * shooter, const CStack *
 	ba.side = shooter->side;
 	ba.actionType = SHOOT;
 	ba.stackNumber = shooter->ID;
-	ba.destinationTile = target->position;
+	ba.destinationTile = target->getPosition();
 	return ba;
 }
 

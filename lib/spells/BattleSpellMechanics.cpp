@@ -340,7 +340,7 @@ void EarthquakeMechanics::applyBattleEffects(const SpellCastEnvironment * env, c
 
 			for(auto & elem : all)
 			{
-				if(elem->position == posRemove)
+				if(elem->initialPosition == posRemove)
 				{
 					bsr.stackIDs.insert(elem->ID);
 					break;

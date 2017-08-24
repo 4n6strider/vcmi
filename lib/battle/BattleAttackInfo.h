@@ -17,7 +17,6 @@ struct DLL_LINKAGE BattleAttackInfo
 {
 	const IBonusBearer *attackerBonuses, *defenderBonuses;
 	const CStack *attacker, *defender;
-	BattleHex attackerPosition, defenderPosition;
 
 	CStackState attackerState, defenderState;
 

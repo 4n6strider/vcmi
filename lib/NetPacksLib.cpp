@@ -1381,7 +1381,7 @@ void BattleStackMoved::applyGs(CGameState *gs)
 				sands->visibleForAnotherSide = true;
 		}
 	}
-	s->position = dest;
+	s->stackState.position = dest;
 }
 
 DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
@@ -1618,9 +1618,9 @@ DLL_LINKAGE void StacksHealedOrResurrected::applyGs(CGameState *gs)
 		//checking if we resurrect a stack that is under a living stack
 		auto accessibility = gs->curB->getAccesibility();
 
-		if(!changedStack->alive() && !accessibility.accessible(changedStack->position, changedStack))
+		if(!changedStack->alive() && !accessibility.accessible(changedStack->getPosition(), changedStack))
 		{
-			logNetwork->error("Cannot resurrect %s because hex %d is occupied!", changedStack->nodeName(), changedStack->position.hex);
+			logNetwork->error("Cannot resurrect %s because hex %d is occupied!", changedStack->nodeName(), changedStack->getPosition().hex);
 			return; //position is already occupied
 		}
 

@@ -186,7 +186,7 @@ Destination::Destination()
 
 Destination::Destination(const CStack * destination)
 	: stackValue(destination),
-	hexValue(destination->position)
+	hexValue(destination->getPosition())
 {
 
 }
@@ -308,7 +308,7 @@ void BattleCast::cast(const SpellCastEnvironment * env)
 
 		if(!mirrorTargets.empty())
 		{
-			int targetHex = (*RandomGeneratorUtil::nextItem(mirrorTargets, env->getRandomGenerator()))->position;
+			int targetHex = (*RandomGeneratorUtil::nextItem(mirrorTargets, env->getRandomGenerator()))->getPosition();
 
 			BattleCast mirror(*this, attackedCre);
 			mirror.aimToHex(targetHex);

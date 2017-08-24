@@ -358,7 +358,8 @@ CStackState::CStackState(const IUnitInfo * Owner)
 	counterAttacks(Owner),
 	health(Owner),
 	shots(Owner),
-	cloneID(-1)
+	cloneID(-1),
+	position()
 {
 
 }
@@ -380,7 +381,8 @@ CStackState::CStackState(const CStackState & other)
 	counterAttacks(other.counterAttacks),
 	health(other.health),
 	shots(other.shots),
-	cloneID(other.cloneID)
+	cloneID(other.cloneID),
+	position(other.position)
 {
 
 }
@@ -404,6 +406,7 @@ CStackState & CStackState::operator=(const CStackState & other)
 	health = other.health;
 	shots = other.shots;
 	cloneID = other.cloneID;
+	position = other.position;
 	return *this;
 }
 
@@ -463,6 +466,11 @@ int32_t CStackState::getFirstHPleft() const
 	return health.getFirstHPleft();
 }
 
+BattleHex CStackState::getPosition() const
+{
+	return position;
+}
+
 void CStackState::serializeJson(JsonSerializeFormat & handler)
 {
 	if(!handler.saving)
@@ -486,6 +494,8 @@ void CStackState::serializeJson(JsonSerializeFormat & handler)
 	handler.serializeStruct("shots", shots);
 
 	handler.serializeInt("cloneID", cloneID);
+
+	handler.serializeInt("position", position);
 }
 
 void CStackState::localInit()
@@ -514,6 +524,8 @@ void CStackState::reset()
 	shots.reset();
 
 	cloneID = -1;
+
+	position = BattleHex::INVALID;
 }
 
 void CStackState::swap(CStackState & other)
@@ -537,6 +549,8 @@ void CStackState::swap(CStackState & other)
 	std::swap(shots, other.shots);
 
 	std::swap(cloneID, other.cloneID);
+
+	std::swap(position, other.position);
 }
 
 void CStackState::toInfo(CStackStateInfo & info)
@@ -600,7 +614,7 @@ CStack::CStack(const CStackInstance * Base, PlayerColor O, int I, ui8 Side, Slot
 	slot(S),
 	side(Side),
 	stackState(this),
-	position()
+	initialPosition()
 {
 	stackState.health.init(); //???
 }
@@ -616,7 +630,7 @@ CStack::CStack()
 	owner = PlayerColor::NEUTRAL;
 	slot = SlotID(255);
 	side = 1;
-	position = BattleHex();
+	initialPosition = BattleHex();
 }
 
 CStack::CStack(const CStackBasicDescriptor * stack, PlayerColor O, int I, ui8 Side, SlotID S)
@@ -629,7 +643,7 @@ CStack::CStack(const CStackBasicDescriptor * stack, PlayerColor O, int I, ui8 Si
 	slot(S),
 	side(Side),
 	stackState(this),
-	position()
+	initialPosition()
 {
 	stackState.health.init(); //???
 }
@@ -657,6 +671,7 @@ void CStack::localInit(BattleInfo * battleInfo)
 	}
 
 	stackState.localInit();
+	stackState.position = initialPosition;
 }
 
 ui32 CStack::level() const
@@ -721,7 +736,7 @@ bool CStack::waited(int turn) const
 
 BattleHex CStack::occupiedHex() const
 {
-	return occupiedHex(position);
+	return occupiedHex(stackState.position);
 }
 
 BattleHex CStack::occupiedHex(BattleHex assumedPos) const
@@ -741,7 +756,7 @@ BattleHex CStack::occupiedHex(BattleHex assumedPos) const
 
 std::vector<BattleHex> CStack::getHexes() const
 {
-	return getHexes(position);
+	return getHexes(stackState.position);
 }
 
 std::vector<BattleHex> CStack::getHexes(BattleHex assumedPos) const
@@ -772,7 +787,7 @@ bool CStack::coversPos(BattleHex pos) const
 
 std::vector<BattleHex> CStack::getSurroundingHexes(BattleHex attackerPos) const
 {
-	BattleHex hex = (attackerPos != BattleHex::INVALID) ? attackerPos : position; //use hypothetical position
+	BattleHex hex = (attackerPos != BattleHex::INVALID) ? attackerPos : stackState.position; //use hypothetical position
 	std::vector<BattleHex> hexes;
 	if(doubleWide())
 	{
@@ -937,9 +952,9 @@ void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand,
 bool CStack::isMeleeAttackPossible(const CStack * attacker, const CStack * defender, BattleHex attackerPos, BattleHex defenderPos)
 {
 	if(!attackerPos.isValid())
-		attackerPos = attacker->position;
+		attackerPos = attacker->stackState.position;
 	if(!defenderPos.isValid())
-		defenderPos = defender->position;
+		defenderPos = defender->stackState.position;
 
 	return
 		(BattleHex::mutualPosition(attackerPos, defenderPos) >= 0)//front <=> front
@@ -959,7 +974,7 @@ std::string CStack::getName() const
 
 bool CStack::isValidTarget(bool allowDead) const
 {
-	return (alive() || (allowDead && isDead())) && position.isValid() && !isTurret();
+	return (alive() || (allowDead && isDead())) && initialPosition.isValid() && !isTurret();
 }
 
 bool CStack::isDead() const
@@ -1191,6 +1206,11 @@ int32_t CStack::getCount() const
 int32_t CStack::getFirstHPleft() const
 {
 	return stackState.getFirstHPleft();
+}
+
+BattleHex CStack::getPosition() const
+{
+	return stackState.getPosition();
 }
 
 void CStack::addText(MetaString & text, ui8 type, int32_t serial, const boost::logic::tribool & plural) const

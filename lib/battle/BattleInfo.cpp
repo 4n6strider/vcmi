@@ -91,7 +91,7 @@ CStack * BattleInfo::generateNewStack(const CStackInstance & base, ui8 side, Slo
 		(base.armyObj && base.armyObj->tempOwner == owner));
 
 	auto ret = new CStack(&base, owner, stackID, side, slot);
-	ret->position = getAvaliableHex(base.getCreatureID(), side, position); //TODO: what if no free tile on battlefield was found?
+	ret->initialPosition = getAvaliableHex(base.getCreatureID(), side, position); //TODO: what if no free tile on battlefield was found?
 	return ret;
 }
 
@@ -100,7 +100,7 @@ CStack * BattleInfo::generateNewStack(const CStackBasicDescriptor & base, ui8 si
 	int stackID = getIdForNewStack();
 	PlayerColor owner = sides[side].color;
 	auto ret = new CStack(&base, owner, stackID, side, slot);
-	ret->position = position;
+	ret->initialPosition = position;
 	return ret;
 }
 

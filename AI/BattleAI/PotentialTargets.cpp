@@ -14,8 +14,8 @@ PotentialTargets::PotentialTargets(const CStack * attacker, const HypotheticChan
 {
 	auto attackerInfo = getValOr(state.stackStates, attacker, std::make_shared<StackWithBonuses>(attacker));
 
-	auto dists = getCbc()->battleGetDistances(attackerInfo.get(), attackerInfo->position);
-	auto avHexes = getCbc()->battleGetAvailableHexes(attackerInfo.get(), attackerInfo->position);
+	auto dists = getCbc()->battleGetDistances(attackerInfo.get(), attackerInfo->state.position);
+	auto avHexes = getCbc()->battleGetAvailableHexes(attackerInfo.get(), attackerInfo->state.position);
 
 	//FIXME: this should part of battleGetAvailableHexes
 	bool forcedTarget = false;
@@ -61,7 +61,7 @@ PotentialTargets::PotentialTargets(const CStack * attacker, const HypotheticChan
 			else
 				unreachableEnemies.push_back(defender);
 		}
-		else if(getCbc()->battleCanShoot(attacker, defender->position))
+		else if(getCbc()->battleCanShoot(attacker, defenderInfo->state.position))
 		{
 			possibleAttacks.push_back(GenerateAttackInfo(true, BattleHex::INVALID));
 		}

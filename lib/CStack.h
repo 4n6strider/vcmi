@@ -155,6 +155,8 @@ public:
 	virtual int32_t getCount() const = 0;
 	virtual int32_t getFirstHPleft() const = 0;
 	virtual int32_t getKilled() const = 0;
+
+	virtual BattleHex getPosition() const = 0;
 };
 
 ///mutable part of CStack
@@ -181,6 +183,9 @@ public:
 	///id of alive clone of this stack clone if any
 	si32 cloneID;
 
+	///position on battlefield; -2 - keep, -3 - lower tower, -4 - upper tower
+	BattleHex position;
+
 	explicit CStackState(const IUnitInfo * Owner);
 	CStackState(const CStackState & other);
 	CStackState(CStackState && other) = delete;
@@ -200,6 +205,8 @@ public:
 	int32_t getKilled() const override;
 	int32_t getCount() const override;
 	int32_t getFirstHPleft() const override;
+
+	BattleHex getPosition() const override;
 
 	void damage(int32_t & amount);
 	void heal(int32_t & amount, EHealLevel level, EHealPower power);
@@ -229,10 +236,9 @@ public:
 	PlayerColor owner; //owner - player color (255 for neutrals)
 	SlotID slot;  //slot - position in garrison (may be 255 for neutrals/called creatures)
 	ui8 side;
+	BattleHex initialPosition; //position on battlefield; -2 - keep, -3 - lower tower, -4 - upper tower
 
 	CStackState stackState;
-
-	BattleHex position; //position on battlefield; -2 - keep, -3 - lower tower, -4 - upper tower
 
 	CStack(const CStackInstance * base, PlayerColor O, int I, ui8 Side, SlotID S);
 	CStack(const CStackBasicDescriptor * stack, PlayerColor O, int I, ui8 Side, SlotID S = SlotID(255));
@@ -328,6 +334,8 @@ public:
 	int32_t getCount() const override;
 	int32_t getFirstHPleft() const override;
 
+	BattleHex getPosition() const override;
+
 	///MetaStrings
 
 	void addText(MetaString & text, ui8 type, int32_t serial, const boost::logic::tribool & plural = boost::logic::indeterminate) const;
@@ -351,7 +359,7 @@ public:
 		h & owner;
 		h & slot;
 		h & side;
-		h & position;
+		h & initialPosition;
 
 		const CArmedInstance * army = (base ? base->armyObj : nullptr);
 		SlotID extSlot = (base ? base->armyObj->findStack(base) : SlotID());

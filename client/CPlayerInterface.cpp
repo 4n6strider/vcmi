@@ -706,7 +706,7 @@ void CPlayerInterface::battleStacksHealedRes(const std::vector<std::pair<ui32, u
 
 		if(attacker && defender)
 		{
-			battleInt->displayEffect(52, attacker->position); //TODO: transparency
+			battleInt->displayEffect(52, attacker->getPosition()); //TODO: transparency
 			CCS->soundh->playSound(soundBase::DRAINLIF);
 
 			MetaString text;
@@ -926,24 +926,24 @@ void CPlayerInterface::battleStacksAttacked(const std::vector<BattleStackAttacke
 	BATTLE_EVENT_POSSIBLE_RETURN;
 
 	std::vector<StackAttackedInfo> arg;
-	for (auto & elem : bsa)
+	for(auto & elem : bsa)
 	{
-		const CStack *defender = cb->battleGetStackByID(elem.stackAttacked, false);
-		const CStack *attacker = cb->battleGetStackByID(elem.attackerID, false);
-		if (elem.isEffect())
+		const CStack * defender = cb->battleGetStackByID(elem.stackAttacked, false);
+		const CStack * attacker = cb->battleGetStackByID(elem.attackerID, false);
+		if(elem.isEffect())
 		{
-			if (defender && !elem.isSecondary())
-				battleInt->displayEffect(elem.effect, defender->position);
+			if(defender && !elem.isSecondary())
+				battleInt->displayEffect(elem.effect, defender->getPosition());
 		}
-		if (elem.isSpell())
+		if(elem.isSpell())
 		{
-			if (defender)
-				battleInt->displaySpellEffect(elem.spellID, defender->position);
+			if(defender)
+				battleInt->displaySpellEffect(elem.spellID, defender->getPosition());
 		}
 		//FIXME: why action is deleted during enchanter cast?
 		bool remoteAttack = false;
 
-		if (LOCPLINT->curAction)
+		if(LOCPLINT->curAction)
 			remoteAttack |= LOCPLINT->curAction->actionType != Battle::WALK_AND_ATTACK;
 
 		StackAttackedInfo to_put = {defender, elem.damageAmount, elem.killedAmount, attacker, remoteAttack, elem.killed(), elem.willRebirth(), elem.cloneKilled()};
@@ -970,13 +970,13 @@ void CPlayerInterface::battleAttack(const BattleAttack * ba)
 	if(ba->lucky()) //lucky hit
 	{
 		battleInt->console->addText(attacker->formatGeneralMessage(-45));
-		battleInt->displayEffect(18, attacker->position);
+		battleInt->displayEffect(18, attacker->getPosition());
 		CCS->soundh->playSound(soundBase::GOODLUCK);
 	}
 	if(ba->unlucky()) //unlucky hit
 	{
 		battleInt->console->addText(attacker->formatGeneralMessage(-44));
-		battleInt->displayEffect(48, attacker->position);
+		battleInt->displayEffect(48, attacker->getPosition());
 		CCS->soundh->playSound(soundBase::BADLUCK);
 	}
 	if(ba->deathBlow())
@@ -985,7 +985,7 @@ void CPlayerInterface::battleAttack(const BattleAttack * ba)
 		for(auto & elem : ba->bsa)
 		{
 			const CStack * attacked = cb->battleGetStackByID(elem.stackAttacked);
-			battleInt->displayEffect(73, attacked->position);
+			battleInt->displayEffect(73, attacked->getPosition());
 		}
 		CCS->soundh->playSound(soundBase::deathBlow);
 	}
@@ -998,17 +998,17 @@ void CPlayerInterface::battleAttack(const BattleAttack * ba)
 			if(!elem.isSecondary()) //display projectile only for primary target
 			{
 				const CStack * attacked = cb->battleGetStackByID(elem.stackAttacked);
-				battleInt->stackAttacking(attacker, attacked->position, attacked, true);
+				battleInt->stackAttacking(attacker, attacked->getPosition(), attacked, true);
 			}
 		}
 	}
 	else
 	{
 		int shift = 0;
-		if(ba->counter() && BattleHex::mutualPosition(curAction->destinationTile, attacker->position) < 0)
+		if(ba->counter() && BattleHex::mutualPosition(curAction->destinationTile, attacker->getPosition()) < 0)
 		{
-			int distp = BattleHex::getDistance(curAction->destinationTile + 1, attacker->position);
-			int distm = BattleHex::getDistance(curAction->destinationTile - 1, attacker->position);
+			int distp = BattleHex::getDistance(curAction->destinationTile + 1, attacker->getPosition());
+			int distm = BattleHex::getDistance(curAction->destinationTile - 1, attacker->getPosition());
 
 			if(distp < distm)
 				shift = 1;

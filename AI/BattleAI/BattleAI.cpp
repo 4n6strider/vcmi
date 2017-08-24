@@ -91,11 +91,11 @@ BattleAction CBattleAI::activeStack( const CStack * stack )
 			if(stack->waited())
 			{
 				//ThreatMap threatsToUs(stack); // These lines may be usefull but they are't used in the code.
-				auto dists = getCbc()->battleGetDistances(stack, stack->position);
+				auto dists = getCbc()->battleGetDistances(stack, stack->getPosition());
 				const EnemyInfo &ei= *range::min_element(targets.unreachableEnemies, std::bind(isCloser, _1, _2, std::ref(dists)));
-				if(distToNearestNeighbour(ei.s->position, dists) < GameConstants::BFIELD_SIZE)
+				if(distToNearestNeighbour(ei.s->getPosition(), dists) < GameConstants::BFIELD_SIZE)
 				{
-					return goTowards(stack, ei.s->position);
+					return goTowards(stack, ei.s->getPosition());
 				}
 			}
 			else
@@ -235,7 +235,7 @@ void CBattleAI::attemptCastingSpell()
 
 				auto swb = getValOr(state.stackStates, stack, std::make_shared<StackWithBonuses>(stack));
 				swb->state = ap.attack.attackerState;
-				swb->position = ap.tile;
+				swb->state.position = ap.tile;
 				state.stackStates[stack] = swb;
 
 				swb = getValOr(state.stackStates, ap.attack.defender, std::make_shared<StackWithBonuses>(ap.attack.defender));
@@ -438,7 +438,7 @@ void CBattleAI::battleStart(const CCreatureSet *army1, const CCreatureSet *army2
 
 bool CBattleAI::isCloser(const EnemyInfo &ei1, const EnemyInfo &ei2, const ReachabilityInfo::TDistances &dists)
 {
-	return distToNearestNeighbour(ei1.s->position, dists) < distToNearestNeighbour(ei2.s->position, dists);
+	return distToNearestNeighbour(ei1.s->getPosition(), dists) < distToNearestNeighbour(ei2.s->getPosition(), dists);
 }
 
 void CBattleAI::print(const std::string &text) const

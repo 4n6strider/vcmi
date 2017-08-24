@@ -1236,7 +1236,7 @@ int CGameHandler::moveStack(int stack, BattleHex dest)
 		assert(gs->curB->isInTacticRange(dest));
 	}
 
-	auto start = curStack->position;
+	auto start = curStack->getPosition();
 	if (start == dest)
 		return 0;
 
@@ -1450,13 +1450,13 @@ int CGameHandler::moveStack(int stack, BattleHex dest)
 			}
 
 			//we don't handle obstacle at the destination tile -> it's handled separately in the if at the end
-			if (curStack->position != dest)
+			if (curStack->getPosition() != dest)
 			{
-				if(stackIsMoving && start != curStack->position)
+				if(stackIsMoving && start != curStack->getPosition())
 					stackIsMoving = handleDamageFromObstacle(curStack, stackIsMoving);
 				if (gateStateChanging)
 				{
-					if (curStack->position == openGateAtHex)
+					if (curStack->getPosition() == openGateAtHex)
 					{
 						openGateAtHex = BattleHex();
 						//only open gate if stack is still alive
@@ -1467,7 +1467,7 @@ int CGameHandler::moveStack(int stack, BattleHex dest)
 							sendAndApply(&db);
 						}
 					}
-					else if (curStack->position == gateMayCloseAtHex)
+					else if (curStack->getPosition() == gateMayCloseAtHex)
 					{
 						gateMayCloseAtHex = BattleHex();
 						updateGateState();
@@ -3989,13 +3989,13 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 				break;
 			}
 
-			BattleHex startingPos = stack->position;
+			BattleHex startingPos = stack->getPosition();
 			int distance = moveStack(ba.stackNumber, ba.destinationTile);
 
 			logGlobal->trace("%s will attack %s", stack->nodeName(), destinationStack->nodeName());
 
-			if(stack->position != ba.destinationTile //we wasn't able to reach destination tile
-				&& !(stack->doubleWide() && (stack->position == ba.destinationTile.cloneInDirection(stack->destShiftDir(), false))) //nor occupy specified hex
+			if(stack->getPosition() != ba.destinationTile //we wasn't able to reach destination tile
+				&& !(stack->doubleWide() && (stack->getPosition() == ba.destinationTile.cloneInDirection(stack->destShiftDir(), false))) //nor occupy specified hex
 				)
 			{
 				complain("We cannot move this stack to its destination " + stack->getCreature()->namePl);
@@ -4048,7 +4048,7 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 					&& stack->alive()) //attacker may have died (fire shield)
 				{
 					BattleAttack bat;
-					prepareAttack(bat, destinationStack, stack, 0, stack->position);
+					prepareAttack(bat, destinationStack, stack, 0, stack->getPosition());
 					bat.flags |= BattleAttack::COUNTER;
 					sendAndApply(&bat);
 					handleAfterAttackCasting(bat);
@@ -4056,7 +4056,7 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 			}
 
 			//return
-			if (stack->hasBonusOfType(Bonus::RETURN_AFTER_STRIKE) && startingPos != stack->position && stack->alive())
+			if (stack->hasBonusOfType(Bonus::RETURN_AFTER_STRIKE) && startingPos != stack->getPosition() && stack->alive())
 			{
 				moveStack(ba.stackNumber, startingPos);
 				//NOTE: curStack->ID == ba.stackNumber (rev 1431)
@@ -4094,7 +4094,7 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 				&& stack->alive()) //attacker may have died (fire shield)
 			{
 				BattleAttack bat;
-				prepareAttack(bat, destinationStack, stack, 0, stack->position);
+				prepareAttack(bat, destinationStack, stack, 0, stack->getPosition());
 				bat.flags |= BattleAttack::COUNTER | BattleAttack::SHOT;
 				sendAndApply(&bat);
 				handleAfterAttackCasting(bat);
@@ -4266,7 +4266,7 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 					BattleStacksRemoved bsr;
 					for (auto & elem : gs->curB->stacks)
 					{
-						if (elem->position == posRemove)
+						if (elem->initialPosition == posRemove)
 						{
 							bsr.stackIDs.insert(elem->ID);
 							break;
@@ -4344,7 +4344,7 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 
 			bsa.amount = std::min(canRiseAmount, destStack->baseAmount);
 
-			bsa.pos = gs->curB->getAvaliableHex(bsa.creID, bsa.side, destStack->position);
+			bsa.pos = gs->curB->getAvaliableHex(bsa.creID, bsa.side, destStack->getPosition());
 			bsa.summoned = false;
 
 			if (bsa.amount) //there's rare possibility single creature cannot rise desired type
@@ -5338,7 +5338,7 @@ void CGameHandler::attackCasting(const BattleAttack & bat, Bonus::BonusType atta
 			vstd::amin(chance, 100);
 
 			const CSpell * spell = SpellID(spellID).toSpell();
-			if(!spell->canBeCastAt(gs->curB, mode, attacker, oneOfAttacked->position))
+			if(!spell->canBeCastAt(gs->curB, mode, attacker, oneOfAttacked->getPosition()))
 				continue;
 
 			//check if spell should be cast (probability handling)
@@ -5348,7 +5348,6 @@ void CGameHandler::attackCasting(const BattleAttack & bat, Bonus::BonusType atta
 			//casting
 			if(castMe)
 			{
-				logGlobal->debug("battle spell cast");
 				spells::BattleCast parameters(gs->curB, attacker, mode, spell);
 				parameters.spellLvl = spellLevel;
 				parameters.effectLevel = spellLevel;
@@ -5460,8 +5459,8 @@ void CGameHandler::handleAfterAttackCasting(const BattleAttack & bat)
 			return;
 
 		BattleStackAdded resurrectInfo;
-		resurrectInfo.pos = defender->position;
-		resurrectInfo.side = defender->side;
+		resurrectInfo.pos = defender->getPosition();
+		resurrectInfo.side = defender->unitSide();
 
 		if(bonusAdditionalInfo != -1)
 			resurrectInfo.creID = (CreatureID)bonusAdditionalInfo;
@@ -5741,7 +5740,7 @@ void CGameHandler::runBattle()
 			if (!guardianIsBig)
 				targetHexes = stack->getSurroundingHexes();
 			else
-				summonGuardiansHelper(targetHexes, stack->position, stack->side, targetIsBig);
+				summonGuardiansHelper(targetHexes, stack->getPosition(), stack->side, targetIsBig);
 
 			for (auto hex : targetHexes)
 			{
@@ -5854,7 +5853,7 @@ void CGameHandler::runBattle()
 					attack.actionType = Battle::WALK_AND_ATTACK;
 					attack.side = next->side;
 					attack.stackNumber = next->ID;
-					attack.additionalInfo = attackInfo.first->position;
+					attack.additionalInfo = attackInfo.first->getPosition();
 					attack.destinationTile = attackInfo.second;
 
 					makeAutomaticAction(next, attack);
@@ -5870,7 +5869,7 @@ void CGameHandler::runBattle()
 
 			const CGHeroInstance * curOwner = battleGetOwnerHero(next);
 
-			if ((next->position < 0 || next->getCreature()->idNumber == CreatureID::BALLISTA)	//arrow turret or ballista
+			if((next->initialPosition < 0 || next->getCreature()->idNumber == CreatureID::BALLISTA) //arrow turret or ballista
 				&& (!curOwner || curOwner->getSecSkillLevel(SecondarySkill::ARTILLERY) == 0)) //hero has no artillery
 			{
 				BattleAction attack;
@@ -5882,7 +5881,7 @@ void CGameHandler::runBattle()
 				{
 					if (elem->owner != next->owner && elem->isValidTarget())
 					{
-						attack.destinationTile = elem->position;
+						attack.destinationTile = elem->getPosition();
 						break;
 					}
 				}
@@ -5937,7 +5936,7 @@ void CGameHandler::runBattle()
 					BattleAction heal;
 					heal.actionType = Battle::STACK_HEAL;
 					heal.additionalInfo = 0;
-					heal.destinationTile = toBeHealed->position;
+					heal.destinationTile = toBeHealed->getPosition();
 					heal.side = next->side;
 					heal.stackNumber = next->ID;
 

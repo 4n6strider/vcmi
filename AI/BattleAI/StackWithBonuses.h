@@ -17,8 +17,6 @@ class StackWithBonuses : public IBonusBearer, public IUnitInfo
 public:
 	const CStack * stack;
 
-	BattleHex position; //TODO: move to state
-
 	CStackState state;
 
 	mutable std::vector<Bonus> bonusesToAdd;

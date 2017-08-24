@@ -23,9 +23,6 @@ BattleAttackInfo::BattleAttackInfo(const CStack * Attacker, const CStack * Defen
 	attackerBonuses = AttackerInfo->unitAsBearer();
 	defenderBonuses = DefenderInfo->unitAsBearer();
 
-	attackerPosition = Attacker->position;
-	defenderPosition = Defender->position;
-
 	shooting = Shooting;
 	chargedFields = 0;
 
@@ -40,7 +37,6 @@ BattleAttackInfo BattleAttackInfo::reverse() const
 	BattleAttackInfo ret = *this;
 	std::swap(ret.attacker, ret.defender);
 	std::swap(ret.attackerBonuses, ret.defenderBonuses);
-	std::swap(ret.attackerPosition, ret.defenderPosition);
 
 	ret.attackerState.swap(ret.defenderState);
 
