@@ -673,17 +673,6 @@ void BattleStackMoved::applyFirstCl(CClient *cl)
 	BATTLE_INTERFACE_CALL_IF_PRESENT_FOR_BOTH_SIDES(battleStackMoved,movedStack,tilesToMove,distance);
 }
 
-//void BattleStackAttacked::(CClient *cl)
-void BattleStackAttacked::applyFirstCl(CClient *cl)
-{
-	std::vector<BattleStackAttacked> bsa;
-	bsa.push_back(*this);
-
-	std::vector<MetaString> battleLog;
-
-	BATTLE_INTERFACE_CALL_IF_PRESENT_FOR_BOTH_SIDES(battleStacksAttacked, bsa, battleLog);
-}
-
 void BattleAttack::applyFirstCl(CClient *cl)
 {
 	BATTLE_INTERFACE_CALL_IF_PRESENT_FOR_BOTH_SIDES(battleAttack,this);

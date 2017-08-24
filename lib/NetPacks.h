@@ -1427,7 +1427,7 @@ struct BattleStacksChanged : public CPackForClient
 	}
 };
 
-struct BattleStackAttacked : public CPackForClient
+struct BattleStackAttacked
 {
 	BattleStackAttacked():
 		stackAttacked(0), attackerID(0),
@@ -1435,8 +1435,7 @@ struct BattleStackAttacked : public CPackForClient
 		newState(),
 		flags(0), effect(0), spellID(SpellID::NONE)
 	{};
-	void applyFirstCl(CClient * cl);
-	//void applyCl(CClient *cl);
+
 	DLL_LINKAGE void applyGs(CGameState *gs);
 
 	ui32 stackAttacked, attackerID;
