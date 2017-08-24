@@ -320,20 +320,6 @@ int32_t CHealth::getResurrected() const
 	return resurrected;
 }
 
-void CHealth::fromInfo(const CHealthInfo & info)
-{
-	firstHPleft = info.firstHPleft;
-	fullUnits = info.fullUnits;
-	resurrected = info.resurrected;
-}
-
-void CHealth::toInfo(CHealthInfo & info) const
-{
-	info.firstHPleft = firstHPleft;
-	info.fullUnits = fullUnits;
-	info.resurrected = resurrected;
-}
-
 void CHealth::takeResurrected()
 {
 	if(resurrected != 0)
@@ -544,38 +530,54 @@ void CStackState::swap(CStackState & other)
 	std::swap(shots, other.shots);
 }
 
-///CStackStateTransfer
-
-CStackStateTransfer::CStackStateTransfer()
-	: stackId(0),
-	data(JsonNode::DATA_NULL)
+void CStackState::toInfo(CStackStateInfo & info)
 {
+	info.stackId = owner->unitId();
 
-}
-
-CStackStateTransfer::~CStackStateTransfer() = default;
-
-void CStackStateTransfer::pack(uint32_t id, CStackState & state)
-{
-	stackId = id;
 	//TODO: use instance resolver for battle stacks
-	JsonSerializer ser(nullptr, data);
-	ser.serializeStruct("state", state);
+	info.data.clear();
+	JsonSerializer ser(nullptr, info.data);
+	ser.serializeStruct("state", *this);
 }
 
-void CStackStateTransfer::unpack(BattleInfo * battle)
+void CStackState::fromInfo(const CStackStateInfo & info)
 {
-	CStack * s = battle->getStack(stackId, false);
+	if(info.stackId != owner->unitId())
+		logGlobal->error("Deserialised state from wrong stack");
+	//TODO: use instance resolver for battle stacks
+	reset();
+    JsonDeserializer deser(nullptr, info.data);
+    deser.serializeStruct("state", *this);
+}
 
-	if(!s)
+void CStackState::damage(int32_t & amount)
+{
+	if(cloned)
 	{
-		logGlobal->error("CRITICAL ERROR! Stack %d to update is not found, battle state is not in sync!", stackId);
-		return;
+		// block ability should not kill clone (0 damage)
+		if(amount > 0)
+		{
+			amount = 1;//TODO: what should be actual damage against clone?
+			health.reset();
+		}
+	}
+	else
+	{
+		health.damage(amount);
 	}
 
-	//TODO: use instance resolver for battle stacks
-    JsonDeserializer deser(nullptr, data);
-    deser.serializeStruct("state", s->stackState);
+	if(health.available() <= 0 && (cloned || summoned))
+		ghostPending = true;
+}
+
+void CStackState::heal(int32_t & amount, EHealLevel level, EHealPower power)
+{
+	if(level == EHealLevel::HEAL && power == EHealPower::ONE_BATTLE)
+		logGlobal->error("Heal for one battle does not make sense");
+	else if(cloned)
+		logGlobal->error("Attempt to heal clone");
+	else
+		health.heal(amount, level, power);
 }
 
 ///CStack
@@ -871,68 +873,30 @@ std::string CStack::nodeName() const
 	return oss.str();
 }
 
-CHealth CStack::healthAfterAttacked(int32_t & damage, const CHealth & customHealth) const
-{
-	CHealth res = customHealth;
-
-	if(isClone())
-	{
-		// block ability should not kill clone (0 damage)
-		if(damage > 0)
-		{
-			damage = 1;//??? what should be actual damage against clone?
-			res.reset();
-		}
-	}
-	else
-	{
-		res.damage(damage);
-	}
-
-	return res;
-}
-
-CHealth CStack::healthAfterHealed(int32_t & toHeal, EHealLevel level, EHealPower power) const
-{
-	CHealth res = stackState.health;
-
-	if(level == EHealLevel::HEAL && power == EHealPower::ONE_BATTLE)
-		logGlobal->error("Heal for one battle does not make sense: %s for %d HP", nodeName(), toHeal);
-	else if(isClone())
-		logGlobal->error("Attempt to heal clone: %s for %d HP", nodeName(), toHeal);
-	else
-		res.heal(toHeal, level, power);
-
-	return res;
-}
-
 void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand) const
 {
-	prepareAttacked(bsa, rand, stackState.health);
+	prepareAttacked(bsa, rand, stackState);
 }
 
-void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand, const CHealth & customHealth) const
+void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand, const CStackState & customState)
 {
-	CHealth afterAttack = healthAfterAttacked(bsa.damageAmount, customHealth);
+	CStackState afterAttack = customState;
+	afterAttack.damage(bsa.damageAmount);
 
-	bsa.killedAmount = customHealth.getCount() - afterAttack.getCount();
-	afterAttack.toInfo(bsa.newHealth);
-	bsa.newHealth.stackId = ID;
-	bsa.newHealth.delta = -bsa.damageAmount;
+	bsa.killedAmount = customState.getCount() - afterAttack.getCount();
 
-	if(afterAttack.available() <= 0 && isClone())
+	if(!afterAttack.alive() && afterAttack.cloned)
 	{
 		bsa.flags |= BattleStackAttacked::CLONE_KILLED;
-		return; // no rebirth I believe
 	}
-
-	if(afterAttack.available() <= 0) //stack killed
+	else if(!afterAttack.alive()) //stack killed
 	{
 		bsa.flags |= BattleStackAttacked::KILLED;
 
-		int resurrectFactor = valOfBonuses(Bonus::REBIRTH);
-		if(resurrectFactor > 0 && canCast()) //there must be casts left
+		int resurrectFactor = afterAttack.getUnitInfo()->unitAsBearer()->valOfBonuses(Bonus::REBIRTH);
+		if(resurrectFactor > 0 && afterAttack.canCast()) //there must be casts left
 		{
+			auto baseAmount = afterAttack.getUnitInfo()->unitBaseAmount();
 			int resurrectedStackCount = baseAmount * resurrectFactor / 100;
 
 			// last stack has proportional chance to rebirth
@@ -943,7 +907,7 @@ void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand,
 				resurrectedStackCount += 1;
 			}
 
-			if(hasBonusOfType(Bonus::REBIRTH, 1))
+			if(afterAttack.getUnitInfo()->unitAsBearer()->hasBonusOfType(Bonus::REBIRTH, 1))
 			{
 				// resurrect at least one Sacred Phoenix
 				vstd::amax(resurrectedStackCount, 1);
@@ -951,14 +915,18 @@ void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand,
 
 			if(resurrectedStackCount > 0)
 			{
+				afterAttack.casts.use();
 				bsa.flags |= BattleStackAttacked::REBIRTH;
+				int32_t toHeal = afterAttack.getUnitInfo()->unitMaxHealth() * resurrectedStackCount;
 				//TODO: use StackHealedOrResurrected
-				bsa.newHealth.firstHPleft = MaxHealth();
-				bsa.newHealth.fullUnits = resurrectedStackCount - 1;
-				bsa.newHealth.resurrected = 0; //TODO: add one-battle rebirth?
+				//TODO: add one-battle rebirth?
+				afterAttack.heal(toHeal, EHealLevel::RESURRECT, EHealPower::PERMANENT);
 			}
 		}
 	}
+
+	afterAttack.toInfo(bsa.newState);
+	bsa.newState.healthDelta = -bsa.damageAmount;
 }
 
 bool CStack::isMeleeAttackPossible(const CStack * attacker, const CStack * defender, BattleHex attackerPos, BattleHex defenderPos)
@@ -1251,15 +1219,4 @@ std::string CStack::formatGeneralMessage(const int32_t baseTextId) const
 	text.addCreReplacement(type->idNumber, stackState.getCount());
 
 	return text.toString();
-}
-
-void CStack::setHealth(const CHealthInfo & value)
-{
-	stackState.health.reset();
-	stackState.health.fromInfo(value);
-}
-
-void CStack::setHealth(const CHealth & value)
-{
-	stackState.health = value;
 }

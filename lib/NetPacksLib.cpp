@@ -1287,8 +1287,7 @@ DLL_LINKAGE void BattleTriggerEffect::applyGs(CGameState *gs)
 	case Bonus::HP_REGENERATION:
 	{
 		int32_t toHeal = val;
-		CHealth health = st->healthAfterHealed(toHeal, EHealLevel::HEAL, EHealPower::PERMANENT);
-		st->setHealth(health);
+		st->stackState.heal(toHeal, EHealLevel::HEAL, EHealPower::PERMANENT);
 		break;
 	}
 	case Bonus::MANA_DRAIN:
@@ -1391,12 +1390,9 @@ DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
 	assert(at);
 	at->popBonuses(Bonus::UntilBeingAttacked);
 
-	if(willRebirth())
-		at->stackState.health.reset();//kill stack first
-	else
-		at->setHealth(newHealth);
+	at->stackState.fromInfo(newState);
 
-	if(killed())
+	if(killed() || willRebirth())
 	{
 		if(at->cloneID >= 0)
 		{
@@ -1415,8 +1411,6 @@ DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
 	if(willRebirth())
 	{
 		//TODO: handle rebirth with StacksHealedOrResurrected
-		at->stackState.casts.use();
-		at->setHealth(newHealth);
 
 		//removing all spells effects
 		auto selector = [](const Bonus * b)
@@ -1432,19 +1426,12 @@ DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
 	}
 	if(cloneKilled())
 	{
-		//"hide" killed creatures instead so we keep info about it
-		at->makeGhost();
-
 		for(CStack * s : gs->curB->stacks)
 		{
 			if(s->cloneID == at->ID)
 				s->cloneID = -1;
 		}
 	}
-
-	//killed summoned creature should be removed like clone
-	if(killed() && at->stackState.summoned)
-		at->makeGhost();
 }
 
 DLL_LINKAGE void BattleAttack::applyGs(CGameState * gs)
@@ -1640,7 +1627,7 @@ DLL_LINKAGE void StacksHealedOrResurrected::applyGs(CGameState *gs)
 		//applying changes
 		bool resurrected = !changedStack->alive(); //indicates if stack is resurrected or just healed
 
-		changedStack->setHealth(elem);
+		changedStack->stackState.fromInfo(elem);
 
 		if(resurrected)
 		{

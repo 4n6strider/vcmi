@@ -66,8 +66,8 @@ AttackPossibility AttackPossibility::evaluate(const BattleAttackInfo & AttackInf
 		if(remainingCounterAttacks <= i || counterAttacksBlocked)
 			ap.damageReceived = 0;
 
-		curBai.attackerState.health = attacker->healthAfterAttacked(ap.damageReceived, curBai.attackerState.health);
-		curBai.defenderState.health = defender->healthAfterAttacked(ap.damageDealt, curBai.defenderState.health);
+		curBai.attackerState.damage(ap.damageReceived);
+		curBai.defenderState.damage(ap.damageDealt);
 		if(!curBai.attackerState.alive())
 			break;
 		if(!curBai.defenderState.alive())

@@ -1051,15 +1051,16 @@ void CGameHandler::applyBattleEffects(BattleAttack &bat, const CStack *att, cons
 		shi.drainedFrom = def->ID;
 
 		int32_t toHeal = bsa.damageAmount * att->valOfBonuses(Bonus::LIFE_DRAIN) / 100;
-		CHealth health = att->healthAfterHealed(toHeal, EHealLevel::RESURRECT, EHealPower::PERMANENT);
+		CStackState state = att->stackState;
+		state.heal(toHeal, EHealLevel::RESURRECT, EHealPower::PERMANENT);
 
-		CHealthInfo hi;
-		health.toInfo(hi);
+		CStackStateInfo hi;
+		state.toInfo(hi);
 		hi.stackId = att->ID;
-		hi.delta = toHeal;
+		hi.healthDelta = toHeal;
 		shi.healedStacks.push_back(hi);
 
-		if(hi.delta > 0)
+		if(toHeal > 0)
 			bsa.healedStacks.push_back(shi);
 	}
 
@@ -1076,12 +1077,14 @@ void CGameHandler::applyBattleEffects(BattleAttack &bat, const CStack *att, cons
 			if(att->hasBonusOfType(Bonus::SOUL_STEAL, i))
 			{
 				int32_t toHeal = bsa.killedAmount * att->valOfBonuses(Bonus::SOUL_STEAL, i) * att->MaxHealth();
-				CHealth health = att->healthAfterHealed(toHeal, EHealLevel::OVERHEAL, ((i == 0) ? EHealPower::ONE_BATTLE : EHealPower::PERMANENT));
-				CHealthInfo hi;
-				health.toInfo(hi);
+				CStackState state = att->stackState;
+				state.heal(toHeal, EHealLevel::OVERHEAL, ((i == 0) ? EHealPower::ONE_BATTLE : EHealPower::PERMANENT));
+
+				CStackStateInfo hi;
+				state.toInfo(hi);
 				hi.stackId = att->ID;
-				hi.delta = toHeal;
-				if(hi.delta > 0)
+				hi.healthDelta = toHeal;
+				if(toHeal > 0)
 					shi.healedStacks.push_back(hi);
 			}
 		}
@@ -4297,7 +4300,8 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 				int32_t toHeal = healer->getCount() * std::max(10, attackingHero->valOfBonuses(Bonus::SECONDARY_SKILL_PREMY, SecondarySkill::FIRST_AID));
 
 				//TODO: allow resurrection for mods
-				CHealth health = destStack->healthAfterHealed(toHeal, EHealLevel::HEAL, EHealPower::PERMANENT);
+				CStackState state = destStack->stackState;
+				state.heal(toHeal, EHealLevel::HEAL, EHealPower::PERMANENT);
 
 				if(toHeal == 0)
 				{
@@ -4310,10 +4314,10 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 					shr.tentHealing = true;
 					shr.drainedFrom = ba.stackNumber;
 
-					CHealthInfo hi;
-					health.toInfo(hi);
+					CStackStateInfo hi;
+					state.toInfo(hi);
 					hi.stackId = destStack->ID;
-					hi.delta = toHeal;
+					hi.healthDelta = toHeal;
 					shr.healedStacks.push_back(hi);
 					sendAndApply(&shr);
 				}
@@ -5309,14 +5313,14 @@ void CGameHandler::attackCasting(const BattleAttack & bat, Bonus::BonusType atta
 			const CStack * oneOfAttacked = nullptr;
 			for(auto & elem : bat.bsa)
 			{
-				if((elem.newHealth.fullUnits > 0 || elem.newHealth.firstHPleft > 0) && !elem.isSecondary()) //apply effects only to first target stack if it's alive
+				if(!elem.isSecondary()) //apply effects only to primary target if it's alive
 				{
 					oneOfAttacked = gs->curB->battleGetStackByID(elem.stackAttacked);
 					break;
 				}
 			}
 			bool castMe = false;
-			if(oneOfAttacked == nullptr)
+			if(oneOfAttacked == nullptr || !oneOfAttacked->alive())
 			{
 				logGlobal->debug("attackCasting: all attacked creatures have been killed");
 				return;

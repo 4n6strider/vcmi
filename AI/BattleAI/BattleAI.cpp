@@ -301,7 +301,7 @@ void CBattleAI::attemptCastingSpell()
 					if(sta->owner == playerID)
 						dmg *= 10;
 
-					swb->state.health = sta->healthAfterAttacked(dmg, swb->state.health);
+					swb->state.damage(dmg);
 
 					//we try to avoid damage to our stacks even if they are mind-controlled
 					if(sta->owner == playerID)

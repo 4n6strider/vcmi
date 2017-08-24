@@ -736,7 +736,7 @@ void StacksHealedOrResurrected::applyCl(CClient * cl)
 	std::vector<std::pair<ui32, ui32> > shiftedHealed;
 	for(auto & elem : healedStacks)
 	{
-		shiftedHealed.push_back(std::make_pair(elem.stackId, (ui32)elem.delta));
+		shiftedHealed.push_back(std::make_pair(elem.stackId, (ui32)elem.healthDelta));
 	}
 	BATTLE_INTERFACE_CALL_IF_PRESENT_FOR_BOTH_SIDES(battleStacksHealedRes, shiftedHealed, lifeDrain, tentHealing, drainedFrom);
 }

@@ -24,6 +24,7 @@ class BattleInfo;
 
 #include "ConstTransitivePtr.h"
 #include "GameConstants.h"
+#include "JsonNode.h"
 
 struct DLL_LINKAGE CPack
 {
@@ -230,25 +231,25 @@ struct ArtifactLocation
 	}
 };
 
-class CHealthInfo
+class CStackStateInfo
 {
 public:
-	CHealthInfo():
-		stackId(0), delta(0), firstHPleft(0), fullUnits(0), resurrected(0)
+	uint32_t stackId;
+	//TODO: remove and use f.e. MetaString in Client to display changes
+	int32_t healthDelta;
+	JsonNode data;
+
+	CStackStateInfo()
+		: stackId(0),
+		healthDelta(0),
+		data()
 	{
 	}
-	uint32_t stackId;
-	int32_t delta;
-	int32_t firstHPleft;
-	int32_t fullUnits;
-	int32_t resurrected;
 
 	template <typename Handler> void serialize(Handler & h, const int version)
 	{
 		h & stackId;
-		h & delta;
-		h & firstHPleft;
-		h & fullUnits;
-		h & resurrected;
+		h & healthDelta;
+		h & data;
 	}
 };

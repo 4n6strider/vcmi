@@ -18,7 +18,7 @@
 struct BattleStackAttacked;
 class BattleInfo;
 class CStack;
-class CHealthInfo;
+class CStackStateInfo;
 class JsonSerializeFormat;
 
 class DLL_LINKAGE IUnitBonusInfo
@@ -114,9 +114,6 @@ public:
 	int64_t available() const;
 	int64_t total() const;
 
-	void toInfo(CHealthInfo & info) const;
-	void fromInfo(const CHealthInfo & info);
-
 	void takeResurrected();
 
 	void serializeJson(JsonSerializeFormat & handler);
@@ -201,33 +198,20 @@ public:
 	int32_t getCount() const override;
 	int32_t getFirstHPleft() const override;
 
+	void damage(int32_t & amount);
+	void heal(int32_t & amount, EHealLevel level, EHealPower power);
+
 	void localInit();
 	void serializeJson(JsonSerializeFormat & handler);
 	void swap(CStackState & other);
+
+	void toInfo(CStackStateInfo & info);
+	void fromInfo(const CStackStateInfo & info);
 
 private:
 	const IUnitInfo * owner;
 
 	void reset();
-};
-
-class DLL_LINKAGE CStackStateTransfer
-{
-public:
-	CStackStateTransfer();
-	~CStackStateTransfer();
-
-	void pack(uint32_t id, CStackState & state);
-	void unpack(BattleInfo * battle);
-
-	template <typename Handler> void serialize(Handler & h, const int version)
-	{
-		h & stackId;
-		h & data;
-	}
-private:
-	uint32_t stackId;
-	JsonNode data;
 };
 
 class DLL_LINKAGE CStack : public CBonusSystemNode, public spells::Caster, public IUnitInfo, public IStackState
@@ -286,12 +270,8 @@ public:
 
 	BattleHex::EDir destShiftDir() const;
 
-	CHealth healthAfterAttacked(int32_t & damage, const CHealth & customHealth) const;
-
-	CHealth healthAfterHealed(int32_t & toHeal, EHealLevel level, EHealPower power) const;
-
 	void prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand) const; //requires bsa.damageAmout filled
-	void prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand, const CHealth & customHealth) const; //requires bsa.damageAmout filled
+	static void prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand, const CStackState & customState); //requires bsa.damageAmout filled
 
 	///spells::Caster
 
@@ -358,8 +338,6 @@ public:
 
 	///stack will be ghost in next battle state update
 	void makeGhost();
-	void setHealth(const CHealthInfo & value);
-	void setHealth(const CHealth & value);
 
 	template <typename Handler> void serialize(Handler & h, const int version)
 	{

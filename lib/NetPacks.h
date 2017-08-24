@@ -12,7 +12,6 @@
 #include "NetPacksBase.h"
 
 #include "battle/BattleAction.h"
-#include "JsonNode.h"
 #include "mapObjects/CGHeroInstance.h"
 #include "ConstTransitivePtr.h"
 #include "int3.h"
@@ -1418,7 +1417,7 @@ struct StacksHealedOrResurrected : public CPackForClient
 	DLL_LINKAGE void applyGs(CGameState *gs);
 	void applyCl(CClient *cl);
 
-	std::vector<CHealthInfo> healedStacks;
+	std::vector<CStackStateInfo> healedStacks;
 	bool lifeDrain; //if true, this heal is an effect of life drain or soul steal
 	bool tentHealing; //if true, than it's healing via First Aid Tent
 	si32 drainedFrom; //if life drain or soul steal - then stack life was drain from, if tentHealing - stack that is a healer
@@ -1437,7 +1436,7 @@ struct BattleStackAttacked : public CPackForClient
 	BattleStackAttacked():
 		stackAttacked(0), attackerID(0),
 		killedAmount(0), damageAmount(0),
-		newHealth(),
+		newState(),
 		flags(0), effect(0), spellID(SpellID::NONE)
 	{};
 	void applyFirstCl(CClient * cl);
@@ -1447,7 +1446,7 @@ struct BattleStackAttacked : public CPackForClient
 	ui32 stackAttacked, attackerID;
 	ui32 killedAmount;
 	si32 damageAmount;
-	CHealthInfo newHealth;
+	CStackStateInfo newState;
 	enum EFlags {KILLED = 1, EFFECT = 2/*deprecated */, SECONDARY = 4, REBIRTH = 8, CLONE_KILLED = 16, SPELL_EFFECT = 32 /*, BONUS_EFFECT = 64 */};
 	ui32 flags; //uses EFlags (above)
 	ui32 effect; //set only if flag EFFECT is set
@@ -1487,7 +1486,7 @@ struct BattleStackAttacked : public CPackForClient
 	{
 		h & stackAttacked;
 		h & attackerID;
-		h & newHealth;
+		h & newState;
 		h & flags;
 		h & killedAmount;
 		h & damageAmount;

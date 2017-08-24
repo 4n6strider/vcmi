@@ -834,15 +834,18 @@ std::pair<ui32, ui32> CBattleInfoCallback::battleEstimateDamage(CRandomGenerator
 		}
 		else
 		{
+			//TODO: rewrite using boost::numeric::interval
+			//TODO: rewire once more using interval-based fuzzy arithmetic
+
 			ui32 TDmgRange::* pairElems[] = {&TDmgRange::first, &TDmgRange::second};
 			for (int i=0; i<2; ++i)
 			{
 				BattleStackAttacked bsa;
 				bsa.damageAmount = ret.*pairElems[i];
-				bai.defender->prepareAttacked(bsa, rand, bai.attackerState.health);
+				CStack::prepareAttacked(bsa, rand, bai.defenderState);
 
 				auto retaliationAttack = bai.reverse();
-				retaliationAttack.attackerState.health = retaliationAttack.attacker->healthAfterAttacked(bsa.damageAmount, retaliationAttack.attackerState.health);
+				retaliationAttack.attackerState.fromInfo(bsa.newState);
 				retaliationDmg->*pairElems[!i] = calculateDmgRange(retaliationAttack).*pairElems[!i];
 			}
 		}

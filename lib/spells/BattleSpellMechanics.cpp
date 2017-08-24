@@ -44,13 +44,16 @@ void HealingSpellMechanics::applyBattleEffects(const SpellCastEnvironment * env,
 	for(auto & attackedCre : ctx.attackedCres)
 	{
 		int32_t stackHPgained = caster->getSpellBonus(owner, hpGained, attackedCre);
-		CHealth health = attackedCre->healthAfterHealed(stackHPgained, healLevel, healPower);
+		CStackState state = attackedCre->stackState;
+		state.heal(stackHPgained, healLevel, healPower);
 
-		CHealthInfo hi;
-		health.toInfo(hi);
-		hi.stackId = attackedCre->ID;
-		hi.delta = stackHPgained;
-		shr.healedStacks.push_back(hi);
+		CStackStateInfo info;
+		state.toInfo(info);
+
+		info.stackId = attackedCre->ID;
+		info.healthDelta = stackHPgained;
+		if(stackHPgained > 0)
+			shr.healedStacks.push_back(info);
 	}
 	if(!shr.healedStacks.empty())
 		env->sendAndApply(&shr);
