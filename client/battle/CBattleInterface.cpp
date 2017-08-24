@@ -2284,7 +2284,7 @@ void CBattleInterface::handleHex(BattleHex myNumber, int eventType)
 					}
 				};
 
-				std::string estDmgText = formatDmgRange(curInt->cb->battleEstimateDamage(CRandomGenerator::getDefault(), sactive, shere)); //calculating estimated dmg
+				std::string estDmgText = formatDmgRange(curInt->cb->battleEstimateDamage(sactive, shere)); //calculating estimated dmg
 				consoleMsg = (boost::format(CGI->generaltexth->allTexts[36]) % shere->getName() % estDmgText).str(); //Attack %s (%s damage)
 			}
 				break;
@@ -2296,7 +2296,7 @@ void CBattleInterface::handleHex(BattleHex myNumber, int eventType)
 					cursorFrame = ECursor::COMBAT_SHOOT;
 
 				realizeAction = [=](){giveCommand(Battle::SHOOT, myNumber, activeStack->ID);};
-				std::string estDmgText = formatDmgRange(curInt->cb->battleEstimateDamage(CRandomGenerator::getDefault(), sactive, shere)); //calculating estimated dmg
+				std::string estDmgText = formatDmgRange(curInt->cb->battleEstimateDamage(sactive, shere)); //calculating estimated dmg
 				//printing - Shoot %s (%d shots left, %s damage)
 				consoleMsg = (boost::format(CGI->generaltexth->allTexts[296]) % shere->getName() % sactive->stackState.shots.available() % estDmgText).str();
 			}

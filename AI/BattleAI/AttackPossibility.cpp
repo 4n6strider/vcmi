@@ -52,7 +52,7 @@ AttackPossibility AttackPossibility::evaluate(const BattleAttackInfo & AttackInf
 	for(int i = 0; i < totalAttacks; i++)
 	{
 		std::pair<ui32, ui32> retaliation(0,0);
-		auto attackDmg = getCbc()->battleEstimateDamage(CRandomGenerator::getDefault(), curBai, &retaliation);
+		auto attackDmg = getCbc()->battleEstimateDamage(curBai, &retaliation);
 
 		vstd::amin(attackDmg.first, curBai.defenderState.health.available());
 		vstd::amin(attackDmg.second, curBai.defenderState.health.available());

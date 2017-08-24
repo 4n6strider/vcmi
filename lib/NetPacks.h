@@ -1507,6 +1507,8 @@ struct BattleAttack : public CPackForClient
 
 	SpellID spellID; //for SPELL_LIKE
 
+	std::vector<MetaString> battleLog;
+
 	bool shot() const//distance attack - decrease number of shots
 	{
 		return flags & SHOT;
@@ -1541,6 +1543,7 @@ struct BattleAttack : public CPackForClient
 		h & stackAttacking;
 		h & flags;
 		h & spellID;
+		h & battleLog;
 	}
 };
 

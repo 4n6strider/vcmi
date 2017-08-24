@@ -941,6 +941,7 @@ void CStack::prepareAttacked(BattleStackAttacked & bsa, CRandomGenerator & rand,
 				//TODO: use StackHealedOrResurrected
 				//TODO: add one-battle rebirth?
 				afterAttack.heal(toHeal, EHealLevel::RESURRECT, EHealPower::PERMANENT);
+				afterAttack.counterAttacks.use(afterAttack.counterAttacks.available());
 			}
 		}
 	}

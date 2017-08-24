@@ -810,15 +810,15 @@ TDmgRange CBattleInfoCallback::calculateDmgRange(const BattleAttackInfo & info) 
 	return returnedVal;
 }
 
-TDmgRange CBattleInfoCallback::battleEstimateDamage(CRandomGenerator & rand, const CStack * attacker, const CStack * defender, TDmgRange * retaliationDmg) const
+TDmgRange CBattleInfoCallback::battleEstimateDamage(const CStack * attacker, const CStack * defender, TDmgRange * retaliationDmg) const
 {
 	RETURN_IF_NOT_BATTLE(std::make_pair(0, 0));
 	const bool shooting = battleCanShoot(attacker, defender->getPosition());
 	const BattleAttackInfo bai(attacker, defender, attacker, defender, shooting);
-	return battleEstimateDamage(rand, bai, retaliationDmg);
+	return battleEstimateDamage(bai, retaliationDmg);
 }
 
-std::pair<ui32, ui32> CBattleInfoCallback::battleEstimateDamage(CRandomGenerator & rand, const BattleAttackInfo & bai, std::pair<ui32, ui32> * retaliationDmg) const
+std::pair<ui32, ui32> CBattleInfoCallback::battleEstimateDamage(const BattleAttackInfo & bai, std::pair<ui32, ui32> * retaliationDmg) const
 {
 	RETURN_IF_NOT_BATTLE(std::make_pair(0, 0));
 
@@ -840,12 +840,9 @@ std::pair<ui32, ui32> CBattleInfoCallback::battleEstimateDamage(CRandomGenerator
 			ui32 TDmgRange::* pairElems[] = {&TDmgRange::first, &TDmgRange::second};
 			for (int i=0; i<2; ++i)
 			{
-				BattleStackAttacked bsa;
-				bsa.damageAmount = ret.*pairElems[i];
-				CStack::prepareAttacked(bsa, rand, bai.defenderState);
-
 				auto retaliationAttack = bai.reverse();
-				retaliationAttack.attackerState.fromInfo(bsa.newState);
+				int32_t dmg = ret.*pairElems[i];
+				retaliationAttack.attackerState.damage(dmg);
 				retaliationDmg->*pairElems[!i] = calculateDmgRange(retaliationAttack).*pairElems[!i];
 			}
 		}

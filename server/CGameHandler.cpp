@@ -4043,8 +4043,6 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 					handleAfterAttackCasting(bat);
 				}
 
-				//FIXME: issue 1811. Block counterattack on defender rebirth, also handle this in damage estimation in battle callback
-
 				//counterattack
 				if (i == 0 && destinationStack
 					&& !stack->hasBonusOfType(Bonus::BLOCKS_RETALIATION)
