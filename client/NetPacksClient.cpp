@@ -731,14 +731,13 @@ void BattleResultsApplied::applyCl(CClient *cl)
 	INTERFACE_CALL_IF_PRESENT(PlayerColor::SPECTATOR, battleResultsApplied);
 }
 
-void StacksHealedOrResurrected::applyCl(CClient * cl)
+void BattleStacksChanged::applyCl(CClient * cl)
 {
-	std::vector<std::pair<ui32, ui32> > shiftedHealed;
-	for(auto & elem : healedStacks)
-	{
-		shiftedHealed.push_back(std::make_pair(elem.stackId, (ui32)elem.healthDelta));
-	}
-	BATTLE_INTERFACE_CALL_IF_PRESENT_FOR_BOTH_SIDES(battleStacksHealedRes, shiftedHealed, lifeDrain, tentHealing, drainedFrom);
+	std::vector<ui32> ids;
+	for(auto & elem : changedStacks)
+		ids.push_back(elem.stackId);
+
+	BATTLE_INTERFACE_CALL_IF_PRESENT_FOR_BOTH_SIDES(battleStacksChanged, ids, customEffects, battleLog);
 }
 
 void ObstaclesRemoved::applyCl(CClient *cl)

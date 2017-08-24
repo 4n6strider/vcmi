@@ -683,63 +683,49 @@ void CPlayerInterface::battleStart(const CCreatureSet *army1, const CCreatureSet
 	BATTLE_EVENT_POSSIBLE_RETURN;
 }
 
-
-void CPlayerInterface::battleStacksHealedRes(const std::vector<std::pair<ui32, ui32> > & healedStacks, bool lifeDrain, bool tentHeal, si32 lifeDrainFrom)
+void CPlayerInterface::battleStacksChanged(const std::vector<ui32> & stacks, const std::vector<CustomEffectInfo> & customEffects, const std::vector<MetaString> & battleLog)
 {
 	EVENT_HANDLER_CALLED_BY_CLIENT;
 	BATTLE_EVENT_POSSIBLE_RETURN;
 
-	for (auto & healedStack : healedStacks)
+
+	for(auto id : stacks)
 	{
-		const CStack * healed = cb->battleGetStackByID(healedStack.first);
-		if (battleInt->creAnims[healed->ID]->isDead())
+		const CStack * s = cb->battleGetStackByID(id, false);
+
+		if(!s)
 		{
-			//stack has been resurrected
-			battleInt->creAnims[healed->ID]->setType(CCreatureAnim::HOLDING);
+			logGlobal->error("Invalid stack ID %d", id);
+			continue;
 		}
+
+		auto iter = battleInt->creAnims.find(id);
+
+		if(iter == battleInt->creAnims.end())
+		{
+			logGlobal->error("Stack %d have no animation", id);
+			continue;
+		}
+
+		CCreatureAnimation * animation = iter->second;
+
+		if(s->alive() && animation->isDead())
+			animation->setType(CCreatureAnim::HOLDING);
+
+		//TODO: handle more cases
+
 	}
 
-	if(lifeDrain)
+	for(const CustomEffectInfo & one : customEffects)
 	{
-		const CStack * attacker = cb->battleGetStackByID(healedStacks[0].first, false);
-		const CStack * defender = cb->battleGetStackByID(lifeDrainFrom, false);
-
-		if(attacker && defender)
-		{
-			battleInt->displayEffect(52, attacker->getPosition()); //TODO: transparency
-			CCS->soundh->playSound(soundBase::DRAINLIF);
-
-			MetaString text;
-			attacker->addText(text, MetaString::GENERAL_TXT, 361);
-			attacker->addNameReplacement(text, false);
-			text.addReplacement(healedStacks[0].second);
-			defender->addNameReplacement(text, true);
-			battleInt->console->addText(text.toString());
-		}
-		else
-		{
-			logGlobal->error("Unable to display life drain info");
-		}
+		if(one.sound != 0)
+			CCS->soundh->playSound(soundBase::soundID(one.sound));
+		const CStack * s = cb->battleGetStackByID(one.stack, false);
+		if(s && one.effect != 0)
+			battleInt->displayEffect(one.effect, s->getPosition());
 	}
-	if(tentHeal)
-	{
-		const CStack * healer = cb->battleGetStackByID(lifeDrainFrom, false);
-		const CStack * target = cb->battleGetStackByID(healedStacks[0].first, false);
 
-		if(healer && target)
-		{
-			MetaString text;
-			text.addTxt(MetaString::GENERAL_TXT, 414);
-			healer->addNameReplacement(text, false);
-			target->addNameReplacement(text, false);
-			text.addReplacement(healedStacks[0].second);
-			battleInt->console->addText(text.toString());
-		}
-		else
-		{
-			logGlobal->error("Unable to display tent heal info");
-		}
-	}
+	battleInt->displayBattleLog(battleLog);
 }
 
 void CPlayerInterface::battleNewStackAppeared(const CStack * stack)

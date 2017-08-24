@@ -1410,7 +1410,7 @@ DLL_LINKAGE void BattleStackAttacked::applyGs(CGameState *gs)
 
 	if(willRebirth())
 	{
-		//TODO: handle rebirth with StacksHealedOrResurrected
+		//TODO: handle rebirth with BattleStacksChanged
 
 		//removing all spells effects
 		auto selector = [](const Bonus * b)
@@ -1608,9 +1608,9 @@ DLL_LINKAGE void StacksInjured::applyGs(CGameState *gs)
 		stackAttacked.applyGs(gs);
 }
 
-DLL_LINKAGE void StacksHealedOrResurrected::applyGs(CGameState *gs)
+DLL_LINKAGE void BattleStacksChanged::applyGs(CGameState *gs)
 {
-	for(auto & elem : healedStacks)
+	for(auto & elem : changedStacks)
 	{
 		CStack * changedStack = gs->curB->getStack(elem.stackId, false);
 		assert(changedStack);

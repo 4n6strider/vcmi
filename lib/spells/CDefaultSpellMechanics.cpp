@@ -168,7 +168,7 @@ void SpellCastContext::addBattleLog(MetaString && line)
 
 void SpellCastContext::addCustomEffect(const CStack * target, ui32 effect)
 {
-	BattleSpellCast::CustomEffect customEffect;
+	CustomEffectInfo customEffect;
 	customEffect.effect = effect;
 	customEffect.stack = target->ID;
 	sc.customEffects.push_back(customEffect);

@@ -34,9 +34,7 @@ void HealingSpellMechanics::applyBattleEffects(const SpellCastEnvironment * env,
 	EHealPower healPower = getHealPower(parameters.effectLevel);
 
 	int hpGained = calculateHealedHP(env, parameters, ctx);
-	StacksHealedOrResurrected shr;
-	shr.lifeDrain = false;
-	shr.tentHealing = false;
+	BattleStacksChanged shr;
 
 	//special case for Archangel
 	bool cure = mode == Mode::CREATURE_ACTIVE && owner->id == SpellID::RESURRECTION;
@@ -53,9 +51,9 @@ void HealingSpellMechanics::applyBattleEffects(const SpellCastEnvironment * env,
 		info.stackId = attackedCre->ID;
 		info.healthDelta = stackHPgained;
 		if(stackHPgained > 0)
-			shr.healedStacks.push_back(info);
+			shr.changedStacks.push_back(info);
 	}
-	if(!shr.healedStacks.empty())
+	if(!shr.changedStacks.empty())
 		env->sendAndApply(&shr);
 
 	if(cure)

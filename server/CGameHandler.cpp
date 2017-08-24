@@ -1042,54 +1042,58 @@ void CGameHandler::applyBattleEffects(BattleAttack &bat, const CStack *att, cons
 	bsa.damageAmount = gs->curB->calculateDmg(att, def, bat.shot(), distance, bat.lucky(), bat.unlucky(), bat.deathBlow(), bat.ballistaDoubleDmg(), getRandomGenerator());
 	def->prepareAttacked(bsa, getRandomGenerator()); //calculate casualties
 
+	auto addLifeDrain = [&](int32_t & toHeal, EHealLevel level, EHealPower power)
+	{
+		BattleStacksChanged pack;
+
+		CStackState state = att->stackState;
+		state.heal(toHeal, level, power);
+
+		CStackStateInfo info;
+		state.toInfo(info);
+		info.stackId = att->ID;
+		info.healthDelta = toHeal;
+		pack.changedStacks.push_back(info);
+
+		CustomEffectInfo customEffect;
+		customEffect.sound = soundBase::DRAINLIF;
+		customEffect.effect = 52;
+		customEffect.stack = att->ID;
+
+		MetaString text;
+		att->addText(text, MetaString::GENERAL_TXT, 361);
+		att->addNameReplacement(text, false);
+		text.addReplacement(toHeal);
+		def->addNameReplacement(text, true);
+		pack.battleLog.push_back(text);
+
+		if(toHeal > 0)
+			bsa.healedStacks.push_back(pack);
+	};
+
 	//life drain handling
 	if(att->hasBonusOfType(Bonus::LIFE_DRAIN) && def->isLiving())
 	{
-		StacksHealedOrResurrected shi;
-		shi.lifeDrain = true;
-		shi.tentHealing = false;
-		shi.drainedFrom = def->ID;
-
 		int32_t toHeal = bsa.damageAmount * att->valOfBonuses(Bonus::LIFE_DRAIN) / 100;
-		CStackState state = att->stackState;
-		state.heal(toHeal, EHealLevel::RESURRECT, EHealPower::PERMANENT);
-
-		CStackStateInfo hi;
-		state.toInfo(hi);
-		hi.stackId = att->ID;
-		hi.healthDelta = toHeal;
-		shi.healedStacks.push_back(hi);
 
 		if(toHeal > 0)
-			bsa.healedStacks.push_back(shi);
+			addLifeDrain(toHeal, EHealLevel::RESURRECT, EHealPower::PERMANENT);
 	}
 
 	//soul steal handling
 	if(att->hasBonusOfType(Bonus::SOUL_STEAL) && def->isLiving())
 	{
-		StacksHealedOrResurrected shi;
-		shi.lifeDrain = true;
-		shi.tentHealing = false;
-		shi.drainedFrom = def->ID;
-
-		for(int i = 0; i < 2; i++) //we can have two bonuses - one with subtype 0 and another with subtype 1
+		//we can have two bonuses - one with subtype 0 and another with subtype 1
+		//try to use permanent first, use only one of two
+		for(si32 subtype = 1; subtype >= 0; subtype--)
 		{
-			if(att->hasBonusOfType(Bonus::SOUL_STEAL, i))
+			if(att->hasBonusOfType(Bonus::SOUL_STEAL, subtype))
 			{
-				int32_t toHeal = bsa.killedAmount * att->valOfBonuses(Bonus::SOUL_STEAL, i) * att->MaxHealth();
-				CStackState state = att->stackState;
-				state.heal(toHeal, EHealLevel::OVERHEAL, ((i == 0) ? EHealPower::ONE_BATTLE : EHealPower::PERMANENT));
-
-				CStackStateInfo hi;
-				state.toInfo(hi);
-				hi.stackId = att->ID;
-				hi.healthDelta = toHeal;
-				if(toHeal > 0)
-					shi.healedStacks.push_back(hi);
+				int32_t toHeal = bsa.killedAmount * att->valOfBonuses(Bonus::SOUL_STEAL, subtype) * att->MaxHealth();
+				addLifeDrain(toHeal, EHealLevel::OVERHEAL, ((subtype == 0) ? EHealPower::ONE_BATTLE : EHealPower::PERMANENT));
+				break;
 			}
 		}
-		if(!shi.healedStacks.empty())
-			bsa.healedStacks.push_back(shi);
 	}
 	bat.bsa.push_back(bsa); //add this stack to the list of victims after drain life has been calculated
 
@@ -4309,17 +4313,21 @@ bool CGameHandler::makeBattleAction(BattleAction &ba)
 				}
 				else
 				{
-					StacksHealedOrResurrected shr;
-					shr.lifeDrain = false;
-					shr.tentHealing = true;
-					shr.drainedFrom = ba.stackNumber;
+					BattleStacksChanged pack;
 
-					CStackStateInfo hi;
-					state.toInfo(hi);
-					hi.stackId = destStack->ID;
-					hi.healthDelta = toHeal;
-					shr.healedStacks.push_back(hi);
-					sendAndApply(&shr);
+					MetaString text;
+					text.addTxt(MetaString::GENERAL_TXT, 414);
+					healer->addNameReplacement(text, false);
+					destStack->addNameReplacement(text, false);
+					text.addReplacement(toHeal);
+					pack.battleLog.push_back(text);
+
+					CStackStateInfo info;
+					state.toInfo(info);
+					info.stackId = destStack->ID;
+					info.healthDelta = toHeal;
+					pack.changedStacks.push_back(info);
+					sendAndApply(&pack);
 				}
 			}
 			break;

@@ -243,11 +243,6 @@ void CStupidAI::battleStart(const CCreatureSet *army1, const CCreatureSet *army2
 	side = Side;
 }
 
-void CStupidAI::battleStacksHealedRes(const std::vector<std::pair<ui32, ui32> > & healedStacks, bool lifeDrain, bool tentHeal, si32 lifeDrainFrom)
-{
-	print("battleStacksHealedRes called");
-}
-
 void CStupidAI::battleNewStackAppeared(const CStack * stack)
 {
 	print("battleNewStackAppeared called");

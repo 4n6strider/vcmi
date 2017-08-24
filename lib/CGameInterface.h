@@ -147,7 +147,7 @@ public:
 	virtual void battleAttack(const BattleAttack *ba) override;
 	virtual void battleSpellCast(const BattleSpellCast *sc) override;
 	virtual void battleEnd(const BattleResult *br) override;
-	virtual void battleStacksHealedRes(const std::vector<std::pair<ui32, ui32> > & healedStacks, bool lifeDrain, bool tentHeal, si32 lifeDrainFrom) override;
+	virtual void battleStacksChanged(const std::vector<ui32> & stacks, const std::vector<CustomEffectInfo> & customEffects, const std::vector<MetaString> & battleLog) override;
 
 	virtual void saveGame(BinarySerializer & h, const int version) override; //saving
 	virtual void loadGame(BinaryDeserializer & h, const int version) override; //loading

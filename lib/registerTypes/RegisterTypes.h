@@ -276,7 +276,7 @@ void registerTypesClientPacks2(Serializer &s)
 	s.template registerType<CPackForClient, BattleSetStackProperty>();
 	s.template registerType<CPackForClient, StacksInjured>();
 	s.template registerType<CPackForClient, BattleResultsApplied>();
-	s.template registerType<CPackForClient, StacksHealedOrResurrected>();
+	s.template registerType<CPackForClient, BattleStacksChanged>();
 	s.template registerType<CPackForClient, ObstaclesRemoved>();
 	s.template registerType<CPackForClient, CatapultAttack>();
 	s.template registerType<CPackForClient, BattleStacksRemoved>();
