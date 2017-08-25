@@ -716,15 +716,7 @@ void CPlayerInterface::battleStacksChanged(const std::vector<ui32> & stacks, con
 
 	}
 
-	for(const CustomEffectInfo & one : customEffects)
-	{
-		if(one.sound != 0)
-			CCS->soundh->playSound(soundBase::soundID(one.sound));
-		const CStack * s = cb->battleGetStackByID(one.stack, false);
-		if(s && one.effect != 0)
-			battleInt->displayEffect(one.effect, s->getPosition());
-	}
-
+	battleInt->displayCustomEffects(customEffects);
 	battleInt->displayBattleLog(battleLog);
 }
 
@@ -935,7 +927,6 @@ void CPlayerInterface::battleStacksAttacked(const std::vector<BattleStackAttacke
 		StackAttackedInfo to_put = {defender, elem.damageAmount, elem.killedAmount, attacker, remoteAttack, elem.killed(), elem.willRebirth(), elem.cloneKilled()};
 		arg.push_back(to_put);
 	}
-
 	battleInt->stacksAreAttacked(arg, battleLog);
 }
 void CPlayerInterface::battleAttack(const BattleAttack * ba)
@@ -975,6 +966,9 @@ void CPlayerInterface::battleAttack(const BattleAttack * ba)
 		}
 		CCS->soundh->playSound(soundBase::deathBlow);
 	}
+
+	battleInt->displayCustomEffects(ba->customEffects);
+
 	battleInt->waitForAnims();
 
 	if(ba->shot())

@@ -1426,6 +1426,18 @@ void CBattleInterface::displayBattleLog(const std::vector<MetaString> & battleLo
 	}
 }
 
+void CBattleInterface::displayCustomEffects(const std::vector<CustomEffectInfo> & customEffects)
+{
+	for(const CustomEffectInfo & one : customEffects)
+	{
+		if(one.sound != 0)
+			CCS->soundh->playSound(soundBase::soundID(one.sound));
+		const CStack * s = curInt->cb->battleGetStackByID(one.stack, false);
+		if(s && one.effect != 0)
+			displayEffect(one.effect, s->getPosition());
+	}
+}
+
 void CBattleInterface::displayEffect(ui32 effect, int destTile)
 {
 	addNewAnim(new CSpellEffectAnimation(this, effect, destTile, 0, 0, false));

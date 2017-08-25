@@ -1508,6 +1508,7 @@ struct BattleAttack : public CPackForClient
 	SpellID spellID; //for SPELL_LIKE
 
 	std::vector<MetaString> battleLog;
+	std::vector<CustomEffectInfo> customEffects;
 
 	bool shot() const//distance attack - decrease number of shots
 	{
@@ -1544,6 +1545,7 @@ struct BattleAttack : public CPackForClient
 		h & flags;
 		h & spellID;
 		h & battleLog;
+		h & customEffects;
 	}
 };
 
@@ -1650,6 +1652,7 @@ struct StacksInjured : public CPackForClient
 
 	std::vector<BattleStackAttacked> stacks;
 	std::vector<MetaString> battleLog;
+
 	template <typename Handler> void serialize(Handler & h, const int version)
 	{
 		h & stacks;
